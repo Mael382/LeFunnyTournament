@@ -48,7 +48,7 @@ class FencerProperties(tk.Toplevel):
 
         # Caractéristiques de la fenêtre
         self.title("Nouveau participant")
-        self.iconbitmap(r"images\LeFunnyIcon.ico")
+        self.iconbitmap(r"assets\images\ico\LeFunnyIcon.ico")
         self.geometry("600x600+70+70")
         self.resizable(False, False)
 
@@ -244,9 +244,9 @@ class FencerProperties(tk.Toplevel):
             mb.showerror(title="Erreur saisie", message="Veuillez renseigner le club du participant.", parent=self)
         elif self.parent.tournament_properties["licence"] and fencer["licence"] == "":
             mb.showerror(title="Erreur saisie", message="Veuillez renseigner la licence du participant.", parent=self)
-
-        # Ajouts des nouvelles équipes et nouveaux clubs, et attribution des indices correspondants
         else:
+
+            # Ajout d'une nouvelle équipe et/ou d'un nouveau club et attribution des indices correspondants
             new_team = False
             team_index = None
             club_index = None
@@ -270,7 +270,7 @@ class FencerProperties(tk.Toplevel):
             fencer["team"] = team_index
             fencer["club"] = club_index
 
-            # ...
+            # Préparation de l'entrée du tableau correspondant au participant
             tournament_fencer = []
             if fencer["team"] is not None:
                 tournament_fencer.append(self.parent.tournament_teams[fencer["team"]])
@@ -278,9 +278,8 @@ class FencerProperties(tk.Toplevel):
             if fencer["club"] is not None:
                 tournament_fencer.append(self.parent.tournament_clubs[fencer["club"]])
             tournament_fencer.append(fencer["licence"])
-            tournament_fencer = tuple(tournament_fencer)
 
-            # ...
+            # Insertion d'une nouvelle équipe dans le tableau
             if new_team and self.parent.tournament_properties["licence"]:
                 self.parent.table.insert("", tk.END, values=(tournament_fencer[0], "", "", "", "", "", ""),
                                          iid=f"T{self.parent.total_teams_added}", open=True,
@@ -290,6 +289,7 @@ class FencerProperties(tk.Toplevel):
                                          iid=f"T{self.parent.total_teams_added}", open=True,
                                          tags=(str(len(self.parent.tournament_fencers) % 2),))
 
+            # Insertion du nouveau participant dans le tableau
             if self.parent.tournament_properties["kind"] == "Equipe":
                 self.parent.table.insert(f"T{team_index + 1}", tk.END, values=tournament_fencer,
                                          iid=f"F{self.parent.total_fencers_added}",
@@ -300,7 +300,7 @@ class FencerProperties(tk.Toplevel):
                                          tags=(str(len(self.parent.tournament_fencers) % 2),))
             self.parent.tournament_fencers.append(tournament_fencer)
 
-            # ...
+            # Ajout d'un autre participant au tournoi
             self.destroy()
             self.parent.add_fencer()
 
@@ -419,7 +419,7 @@ class TournamentProperties(tk.Toplevel):
 
         # Caractéristiques de la fenêtre
         self.title("Nouveau tournoi")
-        self.iconbitmap(r"images\LeFunnyIcon.ico")
+        self.iconbitmap(r"assets\images\ico\LeFunnyIcon.ico")
         self.geometry("600x600+70+70")
         self.resizable(False, False)
 
@@ -576,7 +576,7 @@ class App(tk.Tk):
 
         # Caractéristiques de la fenêtre
         self.title("LeFunnyTournament")
-        self.iconbitmap(r"images\LeFunnyIcon.ico")
+        self.iconbitmap(r"assets\images\ico\LeFunnyIcon.ico")
         self.geometry("1480x780+20+20")
         self.minsize(700, 550)  # 700 550
 
@@ -619,7 +619,7 @@ class App(tk.Tk):
     def create_background(self):
         canvas = tk.Canvas(self, width=700, height=550, bg="#FFFFFF")
 
-        canvas.img = tk.PhotoImage(file=r"images\LeFunnyFencer.png")
+        canvas.img = tk.PhotoImage(file=r"assets\images\png\LeFunnyFencer.png")
         canvas.create_image((350, 275), image=canvas.img)
 
         canvas.pack(anchor=tk.CENTER, expand=True)
