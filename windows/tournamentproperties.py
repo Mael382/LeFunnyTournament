@@ -17,15 +17,20 @@ if TYPE_CHECKING:
 
 
 def get_color_font(color_background: str | tuple[int, int, int]) -> str:
-    """"""
-    # ...
+    """
+    Obtient la couleur hexadécimale de police appropriée, par rapport à la couleur de fond.
+
+    :param color_background: Couleur de fond.
+    :return: Couleur de police
+    """
+    # RGB de fond
     colors: tuple[int, int, int]
     if isinstance(color_background, str):
         colors = (int(color_background[1:3], 16), int(color_background[3:5], 16), int(color_background[5:], 16))
     else:
         colors = color_background
 
-    # ...
+    # Luminosité de fond
     lightness: float = 0
     lightness_factors: tuple[float, float, float] = (0.2126, 0.7152, 0.0722)
     for i, color in enumerate(colors):
@@ -36,7 +41,7 @@ def get_color_font(color_background: str | tuple[int, int, int]) -> str:
             color = ((color + 0.055) / 1.055) ** 2.4
         lightness += lightness_factors[i] * color
 
-    # ...
+    # Police
     color_font: str
     if lightness > 0.179:
         color_font = "#000000"
@@ -270,15 +275,16 @@ class TournamentProperties(tk.Toplevel):
                 if kargs["name"] == "":
                     kargs["name"] = f"{kargs['weapon']}{kargs['gender']}{kargs['category']}"
 
-                # ...
+                # Compétition
                 tournament: Tournament = Tournament(**kargs)
 
-                # ...
+                # Étiquette
                 im: Image = Image.new("RGB", (180, 40), self._color_background)
                 draw: ImageDraw = ImageDraw.Draw(im)
                 draw.text((90, 20), tournament.name,
                           anchor="mm", fill=self._color_font, font=ImageFont.truetype("arial", 20))
                 tag: PhotoImage = PhotoImage(im)
 
+                # Ajout
                 self._parent.add_tournament(tournament, tag)
                 self.destroy()
