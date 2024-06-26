@@ -1,18 +1,49 @@
 import tkinter as tk
-from tkinter import ttk
 import tkinter.messagebox as mb
 import tkinter.colorchooser as cc
 from tkinter import BooleanVar, IntVar, StringVar
 from tkinter.ttk import Style, Label, Button, Radiobutton, Checkbutton, Entry, Combobox, Spinbox, Notebook
 from tkinter import Button as TkButton
 
-from PIL import Image, ImageDraw, ImageFont, ImageTk
+from random import randbytes
+from PIL import Image, ImageDraw, ImageFont
+from PIL.ImageTk import PhotoImage
 
 from competition.tournament import Tournament
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from main import App
+
+
+def get_color_font(color_background: str | tuple[int, int, int]) -> str:
+    """"""
+    # ...
+    colors: tuple[int, int, int]
+    if isinstance(color_background, str):
+        colors = (int(color_background[1:3], 16), int(color_background[3:5], 16), int(color_background[5:], 16))
+    else:
+        colors = color_background
+
+    # ...
+    lightness: float = 0
+    lightness_factors: tuple[float, float, float] = (0.2126, 0.7152, 0.0722)
+    for i, color in enumerate(colors):
+        color /= 255
+        if color <= 0.04045:
+            color /= 12.92
+        else:
+            color = ((color + 0.055) / 1.055) ** 2.4
+        lightness += lightness_factors[i] * color
+
+    # ...
+    color_font: str
+    if lightness > 0.179:
+        color_font = "#000000"
+    else:
+        color_font = "#ffffff"
+
+    return color_font
 
 
 class TournamentProperties(tk.Toplevel):
@@ -23,7 +54,7 @@ class TournamentProperties(tk.Toplevel):
     :type parent: App
     """
     #: Application à laquelle ajouter la compétition
-    _parent: App
+    _parent: "App"
     #: Nom de la compétition
     _tournament_name: StringVar
     #: Arme de la compétition
@@ -45,7 +76,7 @@ class TournamentProperties(tk.Toplevel):
     #: Couleur de police
     _color_font: str
 
-    def __init__(self, parent: App) -> None:
+    def __init__(self, parent: "App") -> None:
         """
         Initialise une nouvelle fenêtre.
         """
@@ -64,8 +95,8 @@ class TournamentProperties(tk.Toplevel):
         self._tournament_draws = BooleanVar(value=False)
 
         # Couleurs
-        self._color_background = "#008000"
-        self._color_font = "#FFFFFF"
+        self._color_background = f"#{randbytes(3).hex()}"
+        self._color_font = get_color_font(self._color_background)
 
         # Fenêtre
         self.title("Nouveau tournoi")
@@ -96,25 +127,16 @@ class TournamentProperties(tk.Toplevel):
             """
             Commande pour sélectionner une couleur.
             """
-            colors: tuple[tuple[int, int, int], str] = cc.askcolor()
-            if colors[1]:
+            colors: tuple[tuple[int, int, int], str] | tuple[None, None] = cc.askcolor()
+            if colors[0] and colors[1]:
+
+                # Fond
                 self._color_background = colors[1]
                 label.config(background=self._color_background)
                 button.config(bg=self._color_background)
-            if colors[0]:
-                lightness: float = 0
-                lightness_factors: tuple[float, float, float] = (0.2126, 0.7152, 0.0722)
-                for i, c in enumerate(colors[0]):
-                    c /= 255
-                    if c <= 0.04045:
-                        c /= 12.92
-                    else:
-                        c = ((c + 0.055) / 1.055) ** 2.4
-                    lightness += lightness_factors[i] * c
-                if lightness > 0.179:
-                    self.color_foreground = "#000000"
-                else:
-                    self.color_foreground = "#FFFFFF"
+
+                # Police
+                self.color_foreground = get_color_font(colors[0])
                 label.config(foreground=self._color_font)
                 button.config(fg=self._color_font)
 
@@ -171,7 +193,7 @@ class TournamentProperties(tk.Toplevel):
             return (arg.isnumeric() and (1 <= int(arg) <= 999)) or arg == ""
 
         # Score maximum
-        score_label: Label = Label(self, text="Score victorieux")
+        score_label: Label = Label(self, text="Score maximum")
         score_spinbox: Spinbox = Spinbox(self, textvariable=self._tournament_score,
                                          from_=1, to=999, validate="key",
                                          validatecommand=(self.register(validator), "%P"), width=15)
@@ -225,46 +247,38 @@ class TournamentProperties(tk.Toplevel):
         Commande pour ajouter la compétition à l'application.
         """
         # Compétition
-        tournament: dict[str, str | int | bool | None] = {"name": self._tournament_name.get().strip(),
-                                                          "weapon": self._tournament_weapon.get(),
-                                                          "gender": self._tournament_gender.get(),
-                                                          "category": self._tournament_category.get().strip(),
-                                                          "kind": self._tournament_kind.get(),
-                                                          "maximum_score": None,
-                                                          "licences_are_needed": self._tournament_licences.get(),
-                                                          "draws_are_allowed": self._tournament_draws.get()}
+        kargs: dict[str, str | int | bool | None] = {"name": self._tournament_name.get().strip(),
+                                                     "weapon": self._tournament_weapon.get(),
+                                                     "gender": self._tournament_gender.get(),
+                                                     "category": self._tournament_category.get().strip(),
+                                                     "kind": self._tournament_kind.get(),
+                                                     "maximum_score": None,
+                                                     "licences_are_needed": self._tournament_licences.get(),
+                                                     "draws_are_allowed": self._tournament_draws.get()}
 
         # Vérifications
-        if tournament["category"] == "":
+        if kargs["category"] == "":
             mb.showerror(title="Erreur Saisie", message="Veuillez renseigner la catégorie de la compétition.",
                          parent=self)
         else:
             try:
-                tournament["maximum_score"] = self._tournament_score.get()
+                kargs["maximum_score"] = self._tournament_score.get()
             except tk.TclError:
                 mb.showerror(title="Erreur Saisie", message="Veuillez renseigner le score maximum de la compétition.",
                              parent=self)
             else:
-                if tournament["heading"] == "":
-                    tournament["heading"] = f"{tournament['weapon']}{tournament['gender']}{tournament['category']}"
+                if kargs["name"] == "":
+                    kargs["name"] = f"{kargs['weapon']}{kargs['gender']}{kargs['category']}"
 
                 # ...
-                if not self._parent.is_notebook:
-                    self._parent.background_image.pack_forget()
-                    self._parent.background_notebook.pack(fill="both", expand=True)
-                    self._parent.is_notebook = True
+                tournament: Tournament = Tournament(**kargs)
 
                 # ...
-                frame: Tournament = Tournament(**tournament)
+                im: Image = Image.new("RGB", (180, 40), self._color_background)
+                draw: ImageDraw = ImageDraw.Draw(im)
+                draw.text((90, 20), tournament.name,
+                          anchor="mm", fill=self._color_font, font=ImageFont.truetype("arial", 20))
+                tag: PhotoImage = PhotoImage(im)
 
-                # ...
-                im = Image.new("RGB", (180, 40), self._color_background)
-                im_draw = ImageDraw.Draw(im)
-                im_draw.text((90, 20), tournament["name"],
-                             anchor="mm", fill=self._color_font, font=ImageFont.truetype("arial", 20))
-                frame.img = ImageTk.PhotoImage(im)
-
-                # ...
-                self.parent.background_notebook.add(frame, image=frame.img)
-                self.parent.notebook_frames.append(frame)
+                self._parent.add_tournament(tournament, tag)
                 self.destroy()
