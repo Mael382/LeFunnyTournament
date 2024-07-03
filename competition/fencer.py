@@ -212,7 +212,7 @@ class Fencer:
                f"has_team={self.has_team})"
 
     def __hash__(self) -> int:
-        return hash((self._lastname, self._firstname))
+        return hash(self.name)
 
     def __eq__(self, other_fencer: "Fencer") -> bool:
         return self.score == other_fencer.score
